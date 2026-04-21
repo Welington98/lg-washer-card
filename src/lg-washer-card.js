@@ -1,5 +1,4 @@
 import { LitElement, html, css } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
 
 const CARD_VERSION = "1.0.0";
 
@@ -7,8 +6,10 @@ const CARD_VERSION = "1.0.0";
 // Editor (visual config)
 // ---------------------------------------------------------------------------
 class LgWasherCardEditor extends LitElement {
-  @property({ attribute: false }) hass;
-  @property({ attribute: false }) _config = {};
+  constructor() {
+    super();
+    this._config = {};
+  }
 
   static get properties() {
     return { hass: {}, _config: {} };
@@ -93,8 +94,10 @@ customElements.define("lg-washer-card-editor", LgWasherCardEditor);
 // Main card
 // ---------------------------------------------------------------------------
 class LgWasherCard extends LitElement {
-  @property({ attribute: false }) hass;
-  @property({ attribute: false }) _config = {};
+  constructor() {
+    super();
+    this._config = {};
+  }
 
   static get properties() {
     return { hass: {}, _config: {} };
