@@ -22,9 +22,9 @@ class LgWasherCardEditor extends LitElement {
   _valueChanged(ev) {
     if (!this._config || !this.hass) return;
     const target = ev.target;
-    const key = target.configValue;
+    const key = target.configValue || target.dataset.key;
     if (!key) return;
-    const value = target.value;
+    const value = target.type === "checkbox" ? target.checked : target.value;
     this._config = { ...this._config, [key]: value };
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: this._config } }));
   }
@@ -44,12 +44,23 @@ class LgWasherCardEditor extends LitElement {
       { key: "course_select", label: "Seletor de operação (select.*)", type: "entity" },
       { key: "pause_button", label: "Botão de pausar", type: "entity" },
       { key: "start_button", label: "Botão de iniciar remotamente", type: "entity" },
+      { key: "color_bg", label: "Cor de fundo do card", type: "color", section: "🎨 Cores", default: "#0f172a" },
+      { key: "color_accent", label: "Cor de destaque", type: "color", section: "🎨 Cores", default: "#3b82f6" },
+      { key: "color_inactive", label: "Cor de ícone inativo", type: "color", section: "🎨 Cores", default: "#475569" },
+      { key: "color_progress", label: "Cor da barra de progresso", type: "color", section: "🎨 Cores", default: "#22d3ee" },
     ];
 
+    let currentSection = null;
     return html`
       <div class="card-config">
-        ${fields.map((f) =>
-          f.type === "entity"
+        ${fields.map((f) => {
+          let sectionHtml = html``;
+          if (f.section && f.section !== currentSection) {
+            currentSection = f.section;
+            sectionHtml = html`<div class="config-section">${f.section}</div>`;
+          }
+          return html`${sectionHtml}${
+            f.type === "entity"
             ? html`
                 <ha-entity-picker
                   .label="${f.label}"
@@ -60,6 +71,21 @@ class LgWasherCardEditor extends LitElement {
                   allow-custom-entity
                 ></ha-entity-picker>
               `
+            : f.type === "color"
+            ? html`
+                <div class="color-input-wrapper">
+                  <label>${f.label}</label>
+                  <div class="color-preview-wrap">
+                    <input
+                      type="color"
+                      data-key=${f.key}
+                      .value=${this._config[f.key] || f.default}
+                      @input=${this._valueChanged}
+                    />
+                    <span class="color-hex">${this._config[f.key] || f.default}</span>
+                  </div>
+                </div>
+              `
             : html`
                 <ha-textfield
                   .label="${f.label}"
@@ -68,7 +94,8 @@ class LgWasherCardEditor extends LitElement {
                   @input=${this._valueChanged}
                 ></ha-textfield>
               `
-        )}
+          }`;
+        })}
       </div>
     `;
   }
@@ -84,6 +111,49 @@ class LgWasherCardEditor extends LitElement {
       ha-entity-picker,
       ha-textfield {
         width: 100%;
+      }
+      .config-section {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: #888;
+        padding: 8px 0 4px;
+        border-top: 1px solid rgba(128,128,128,0.2);
+        margin-top: 4px;
+      }
+      .color-input-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        background: rgba(128,128,128,0.08);
+        border-radius: 8px;
+        padding: 10px 12px;
+      }
+      .color-input-wrapper label {
+        flex: 1;
+        font-size: 13px;
+      }
+      .color-preview-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .color-hex {
+        font-size: 11px;
+        font-family: monospace;
+        color: #666;
+        min-width: 54px;
+      }
+      .color-input-wrapper input[type="color"] {
+        width: 44px;
+        height: 36px;
+        border: 1px solid rgba(128,128,128,0.3);
+        border-radius: 6px;
+        cursor: pointer;
+        padding: 2px;
+        background: transparent;
       }
     `;
   }
@@ -214,6 +284,15 @@ class LgWasherCard extends LitElement {
     });
   }
 
+  _getColorVars() {
+    return {
+      "--washer-bg": this._config.color_bg || "#0f172a",
+      "--washer-accent": this._config.color_accent || "#3b82f6",
+      "--washer-inactive": this._config.color_inactive || "#475569",
+      "--washer-progress": this._config.color_progress || "#22d3ee",
+    };
+  }
+
   render() {
     if (!this._config || !this.hass) return html``;
 
@@ -233,7 +312,7 @@ class LgWasherCard extends LitElement {
     const selectedCourse = courseSelectEntity?.state || "";
 
     return html`
-      <ha-card>
+      <ha-card style="${Object.entries(this._getColorVars()).map(([k, v]) => `${k}: ${v}`).join(";")}">
         <div class="washer-card ${isOn ? "" : "washer-off"}">
 
           <!-- Header -->
@@ -371,7 +450,7 @@ class LgWasherCard extends LitElement {
       }
 
       ha-card {
-        background: #0f172a;
+        background: var(--washer-bg, #0f172a);
         border-radius: 2.5rem;
         padding: 0;
         border: 1px solid rgba(255, 255, 255, 0.2);
@@ -477,10 +556,10 @@ class LgWasherCard extends LitElement {
         --mdc-icon-size: 80px;
       }
       .icon-active {
-        color: #60a5fa;
+        color: var(--washer-accent, #3b82f6);
       }
       .icon-inactive {
-        color: #475569;
+        color: var(--washer-inactive, #475569);
       }
       .spin-ring {
         position: absolute;
@@ -503,8 +582,10 @@ class LgWasherCard extends LitElement {
         letter-spacing: 1px;
       }
       .badge-on {
-        background: rgba(59, 130, 246, 0.2);
-        color: #93c5fd;
+        background: var(--washer-accent, #3b82f6) ;
+        opacity: 0.2;
+        color: var(--washer-accent, #3b82f6);
+        opacity: 1;
       }
       .badge-off {
         background: rgba(51, 65, 85, 1);
@@ -548,10 +629,11 @@ class LgWasherCard extends LitElement {
       }
       .progress-fill {
         height: 100%;
-        background: linear-gradient(90deg, #2563eb, #22d3ee);
+        background: linear-gradient(90deg, var(--washer-accent, #3b82f6), var(--washer-progress, #22d3ee));
         border-radius: 9999px;
         transition: width 1s ease-out;
-        box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+        box-shadow: 0 0 10px var(--washer-progress, #22d3ee);
+        opacity: 0.5;
       }
 
       /* Info */
@@ -699,9 +781,12 @@ class LgWasherCard extends LitElement {
       .ctrl-icon-primary {
         width: 56px;
         height: 56px;
-        background: rgba(59, 130, 246, 0.2);
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        color: #60a5fa;
+        background: var(--washer-accent, #3b82f6);
+        opacity: 0.2;
+        border: 1px solid var(--washer-accent, #3b82f6);
+        opacity: 0.3;
+        color: var(--washer-accent, #3b82f6);
+        opacity: 1;
       }
       .ctrl-icon-primary ha-icon {
         --mdc-icon-size: 28px;
@@ -754,7 +839,7 @@ class LgWasherMiniCard extends LgWasherCard {
     const selectedCourse = courseSelectEntity?.state || "";
 
     return html`
-      <ha-card class="mini-card-shell">
+      <ha-card class="mini-card-shell" style="${Object.entries(this._getColorVars()).map(([k, v]) => `${k}: ${v}`).join(";")}">
         <div class="mini-card ${isOn ? "" : "washer-off"}">
           <button
             class="mini-power-btn ${isOn ? "power-on" : "power-off"}"

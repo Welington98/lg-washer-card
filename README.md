@@ -90,6 +90,11 @@ start_button: button.lavadora_remote_start
 | `power_switch` | Switch de energia | ❌ |
 | `pause_button` | Botão de pausar | ❌ |
 | `start_button` | Botão de iniciar remotamente | ❌ |
+| `course_select` | Seletor de operação (select.*) | ❌ |
+| `color_bg` | Cor de fundo do card (hex) | ❌ |
+| `color_accent` | Cor de destaque/destaque (hex) | ❌ |
+| `color_inactive` | Cor de ícone inativo (hex) | ❌ |
+| `color_progress` | Cor da barra de progresso (hex) | ❌ |
 
 ## Atributos Esperados na Entidade Principal
 
@@ -98,6 +103,25 @@ O card utiliza os seguintes atributos da entidade principal:
 - `run_state` — estado de execução (ex: `LAVANDO`)
 - `remain_time` — tempo restante (formato `H:MM:SS`)
 - `initial_time` — tempo total do ciclo
+
+## Personalização de Cores
+
+Você pode personalizar as cores do card usando os campos `color_*`. Use o editor visual do card para selecionar as cores ou configure via YAML:
+
+```yaml
+type: custom:lg-washer-card
+entity: sensor.lavadora
+name: Lavadora
+color_bg: "#1a1a2e"
+color_accent: "#00d4ff"
+color_inactive: "#666666"
+color_progress: "#00ff88"
+```
+
+- `color_bg` — Fundo do card (padrão: `#0f172a`)
+- `color_accent` — Cor de destaque para ícones ativos e progresso (padrão: `#3b82f6`)
+- `color_inactive` — Cor para ícones inativos (padrão: `#475569`)
+- `color_progress` — Cor da barra de progresso (padrão: `#22d3ee`)
 
 ## Licença
 
