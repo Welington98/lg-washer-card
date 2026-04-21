@@ -41,6 +41,7 @@ class LgWasherCardEditor extends LitElement {
       { key: "spin_entity", label: "Entidade de velocidade de centrifugação", type: "entity" },
       { key: "course_entity", label: "Entidade do ciclo atual", type: "entity" },
       { key: "power_switch", label: "Switch de energia", type: "entity" },
+      { key: "course_select", label: "Seletor de operação (select.*)", type: "entity" },
       { key: "pause_button", label: "Botão de pausar", type: "entity" },
       { key: "start_button", label: "Botão de iniciar remotamente", type: "entity" },
     ];
@@ -118,6 +119,7 @@ class LgWasherCard extends LitElement {
       spin_entity: entities.find((e) => e.includes("spin_speed")) || "",
       course_entity: entities.find((e) => e.includes("current_course")) || "",
       power_switch: entities.find((e) => e.startsWith("switch.lavadora")) || "",
+      course_select: entities.find((e) => e.includes("course_selection")) || "",
       pause_button: entities.find((e) => e.includes("pause")) || "",
       start_button: entities.find((e) => e.includes("remote_start")) || "",
     };
@@ -203,6 +205,15 @@ class LgWasherCard extends LitElement {
     if (btn) this._callService("button", "press", btn);
   }
 
+  _selectCourse(ev) {
+    const entityId = this._config.course_select;
+    if (!entityId) return;
+    this.hass.callService("select", "select_option", {
+      entity_id: entityId,
+      option: ev.target.value,
+    });
+  }
+
   render() {
     if (!this._config || !this.hass) return html``;
 
@@ -217,10 +228,13 @@ class LgWasherCard extends LitElement {
     const tempEntity = this._entity("temp_entity");
     const spinEntity = this._entity("spin_entity");
     const courseEntity = this._entity("course_entity");
+    const courseSelectEntity = this._entity("course_select");
+    const courseOptions = courseSelectEntity?.attributes?.options || [];
+    const selectedCourse = courseSelectEntity?.state || "";
 
     return html`
       <ha-card>
-        <div class="washer-card">
+        <div class="washer-card ${isOn ? "" : "washer-off"}">
 
           <!-- Header -->
           <div class="header">
@@ -300,6 +314,26 @@ class LgWasherCard extends LitElement {
               </div>
             ` : ""}
           </div>
+
+          <!-- Course selector -->
+          ${courseOptions.length > 0 ? html`
+            <div class="course-selector-section">
+              <div class="course-selector-label">
+                <ha-icon icon="mdi:tune-vertical-variant" class="course-selector-icon"></ha-icon>
+                <span>OPERAÇÃO</span>
+              </div>
+              <select
+                class="course-select"
+                .value=${selectedCourse}
+                @change=${this._selectCourse}
+                ?disabled=${isOn}
+              >
+                ${courseOptions.map((opt) => html`
+                  <option value=${opt} ?selected=${opt === selectedCourse}>${opt}</option>
+                `)}
+              </select>
+            </div>
+          ` : ""}
 
           <!-- Controls -->
           <div class="controls">
@@ -556,6 +590,76 @@ class LgWasherCard extends LitElement {
         font-size: 10px;
       }
 
+      /* Off state */
+      .washer-off .visual {
+        opacity: 0.45;
+        filter: grayscale(0.6);
+        pointer-events: none;
+      }
+      .washer-off .progress-section {
+        opacity: 0.3;
+      }
+      .washer-off .info-grid {
+        opacity: 0.3;
+      }
+      .washer-off .controls .ctrl-btn:not(.ctrl-disabled) {
+        opacity: 0.35;
+        pointer-events: none;
+      }
+
+      /* Course selector */
+      .course-selector-section {
+        padding: 0 24px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .course-selector-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        color: #94a3b8;
+        text-transform: uppercase;
+      }
+      .course-selector-icon {
+        --mdc-icon-size: 14px;
+        color: #94a3b8;
+      }
+      .course-select {
+        width: 100%;
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.875rem;
+        color: white;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 10px 14px;
+        cursor: pointer;
+        outline: none;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%2394a3b8' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 36px;
+        transition: border-color 0.2s;
+      }
+      .course-select:focus {
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+      }
+      .course-select:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .course-select option {
+        background: #1e293b;
+        color: white;
+      }
+
       /* Controls */
       .controls {
         background: rgba(0, 0, 0, 0.2);
@@ -645,10 +749,13 @@ class LgWasherMiniCard extends LgWasherCard {
     const model = this._config.model || "";
     const courseEntity = this._entity("course_entity");
     const spinEntity = this._entity("spin_entity");
+    const courseSelectEntity = this._entity("course_select");
+    const courseOptions = courseSelectEntity?.attributes?.options || [];
+    const selectedCourse = courseSelectEntity?.state || "";
 
     return html`
       <ha-card class="mini-card-shell">
-        <div class="mini-card">
+        <div class="mini-card ${isOn ? "" : "washer-off"}">
           <button
             class="mini-power-btn ${isOn ? "power-on" : "power-off"}"
             @click=${this._togglePower}
@@ -701,6 +808,19 @@ class LgWasherMiniCard extends LgWasherCard {
               <span class="mini-info-value">${spinEntity ? spinEntity.state : "-"}</span>
             </div>
           </div>
+
+          ${courseOptions.length > 0 ? html`
+            <select
+              class="course-select"
+              .value=${selectedCourse}
+              @change=${this._selectCourse}
+              ?disabled=${isOn}
+            >
+              ${courseOptions.map((opt) => html`
+                <option value=${opt} ?selected=${opt === selectedCourse}>${opt}</option>
+              `)}
+            </select>
+          ` : ""}
         </div>
       </ha-card>
     `;
