@@ -629,12 +629,245 @@ class LgWasherCard extends LitElement {
 
 customElements.define("lg-washer-card", LgWasherCard);
 
+class LgWasherMiniCard extends LgWasherCard {
+  getCardSize() {
+    return 3;
+  }
+
+  render() {
+    if (!this._config || !this.hass) return html``;
+
+    const isOn = this._isOn;
+    const progress = this._progress;
+    const remainTime = this._remainTime;
+    const runState = this._runState;
+    const name = this._config.name || "Lavadora";
+    const model = this._config.model || "";
+    const courseEntity = this._entity("course_entity");
+    const spinEntity = this._entity("spin_entity");
+
+    return html`
+      <ha-card class="mini-card-shell">
+        <div class="mini-card">
+          <button
+            class="mini-power-btn ${isOn ? "power-on" : "power-off"}"
+            @click=${this._togglePower}
+            title="Ligar/Desligar"
+          >
+            <ha-icon icon="mdi:power"></ha-icon>
+          </button>
+
+          <div class="mini-top" @click=${this._showMoreInfo}>
+            <div class="mini-icon-wrap ${isOn ? "icon-on" : ""}">
+              <div class="icon-blur ${isOn ? "pulse" : ""}"></div>
+              <ha-icon
+                icon="mdi:washing-machine"
+                class="mini-main-icon ${isOn ? "icon-active" : "icon-inactive"}"
+              ></ha-icon>
+              <ha-icon
+                icon="mdi:sync"
+                class="mini-spin-ring ${isOn ? "rotating" : ""}"
+              ></ha-icon>
+            </div>
+
+            <div class="mini-summary">
+              <div class="mini-name">${name}</div>
+              <div class="mini-model">${model}</div>
+              <span class="state-badge ${isOn ? "badge-on" : "badge-off"}">
+                ${isOn ? runState : "PRONTA"}
+              </span>
+            </div>
+          </div>
+
+          <div class="mini-time-row">
+            <div class="mini-time">
+              <ha-icon icon="mdi:clock-outline" class="time-icon"></ha-icon>
+              ${remainTime}
+            </div>
+            <div class="mini-progress-value">${progress}%</div>
+          </div>
+
+          <div class="progress-track mini-progress-track">
+            <div class="progress-fill" style="width: ${progress}%"></div>
+          </div>
+
+          <div class="mini-info">
+            <div class="mini-info-item">
+              <span class="mini-info-label">CICLO</span>
+              <span class="mini-info-value">${courseEntity ? courseEntity.state : "-"}</span>
+            </div>
+            <div class="mini-info-item">
+              <span class="mini-info-label">CENTRIF.</span>
+              <span class="mini-info-value">${spinEntity ? spinEntity.state : "-"}</span>
+            </div>
+          </div>
+        </div>
+      </ha-card>
+    `;
+  }
+
+  static get styles() {
+    return [
+      LgWasherCard.styles,
+      css`
+        ha-card.mini-card-shell {
+          border-radius: 1.75rem;
+        }
+
+        .mini-card {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          padding: 18px;
+        }
+
+        .mini-power-btn {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          width: 36px;
+          height: 36px;
+          border-radius: 9999px;
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s ease;
+          z-index: 2;
+        }
+
+        .mini-top {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding-right: 44px;
+          cursor: pointer;
+        }
+
+        .mini-icon-wrap {
+          position: relative;
+          flex: 0 0 auto;
+          width: 74px;
+          height: 74px;
+          border-radius: 50%;
+          background: rgba(30, 41, 59, 0.55);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .mini-main-icon {
+          z-index: 1;
+          --mdc-icon-size: 34px;
+        }
+
+        .mini-spin-ring {
+          position: absolute;
+          --mdc-icon-size: 52px;
+          color: rgba(59, 130, 246, 0.14);
+        }
+
+        .mini-summary {
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 6px;
+        }
+
+        .mini-name {
+          font-size: 16px;
+          font-weight: 700;
+          line-height: 1.1;
+        }
+
+        .mini-model {
+          font-size: 12px;
+          color: #94a3b8;
+          line-height: 1.2;
+        }
+
+        .mini-time-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .mini-time {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 24px;
+          font-weight: 300;
+          letter-spacing: 0.02em;
+        }
+
+        .mini-progress-value {
+          font-size: 11px;
+          font-weight: 800;
+          color: #94a3b8;
+          letter-spacing: 0.08em;
+        }
+
+        .mini-progress-track {
+          height: 7px;
+        }
+
+        .mini-info {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        .mini-info-item {
+          min-width: 0;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-radius: 1rem;
+          padding: 10px 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .mini-info-label {
+          font-size: 9px;
+          color: #94a3b8;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+        }
+
+        .mini-info-value {
+          font-size: 12px;
+          color: white;
+          font-weight: 600;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      `,
+    ];
+  }
+}
+
+customElements.define("lg-washer-mini-card", LgWasherMiniCard);
+
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "lg-washer-card",
   name: "LG Washer Card",
   preview: true,
   description: "Card customizável para máquinas de lavar LG ThinQ com editor visual e integração nativa ao Home Assistant.",
+});
+window.customCards.push({
+  type: "lg-washer-mini-card",
+  name: "LG Washer Mini Card",
+  preview: true,
+  description: "Versão compacta do card da lavadora LG ThinQ com ações principais e status resumido.",
 });
 
 console.info(
