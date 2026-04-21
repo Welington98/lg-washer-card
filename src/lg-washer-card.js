@@ -177,7 +177,20 @@ class LgWasherCard extends LitElement {
 
   _togglePower() {
     const sw = this._config.power_switch;
-    if (sw) this._callService("switch", "toggle", sw);
+    if (!sw) return;
+    const swEntity = this.hass.states[sw];
+    const service = swEntity && swEntity.state === "on" ? "turn_off" : "turn_on";
+    this._callService("switch", service, sw);
+  }
+
+  _showMoreInfo() {
+    const entityId = this._config.entity;
+    if (!entityId) return;
+    this.dispatchEvent(new CustomEvent("hass-more-info", {
+      bubbles: true,
+      composed: true,
+      detail: { entityId },
+    }));
   }
 
   _pressPause() {
@@ -229,7 +242,7 @@ class LgWasherCard extends LitElement {
 
           <!-- Visual -->
           <div class="visual">
-            <div class="icon-wrap ${isOn ? "icon-on" : ""}">
+            <div class="icon-wrap ${isOn ? "icon-on" : ""}" @click=${this._showMoreInfo} style="cursor:pointer">
               <div class="icon-blur ${isOn ? "pulse" : ""}"></div>
               <ha-icon
                 icon="mdi:washing-machine"
