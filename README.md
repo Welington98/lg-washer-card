@@ -1,14 +1,16 @@
 # LG Washer Card
 
-Card customizável para máquinas de lavar **LG ThinQ** no Home Assistant, com editor visual e animações.
+Card customizável para máquinas de lavar **LG ThinQ** no Home Assistant, com versão completa e mini card simplificado.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![GitHub release](https://img.shields.io/github/release/SEU_USUARIO/lg-washer-card.svg)](https://github.com/SEU_USUARIO/lg-washer-card/releases)
 
-![preview](./assets/preview.png)
+<img src="./assets/preview.png" alt="preview" width="50%" />
 
 ## Funcionalidades
 
+- Card completo para visual rico com controles e métricas detalhadas
+- Mini card para layouts compactos com status resumido e ações principais
 - Indicador visual com animação de rotação quando em funcionamento
 - Barra de progresso dinâmica baseada no tempo restante
 - Exibição de temperatura, centrifugação e ciclo atual
@@ -22,7 +24,7 @@ Card customizável para máquinas de lavar **LG ThinQ** no Home Assistant, com e
 2. Pesquise por **LG Washer Card**
 3. Clique em **Baixar**
 4. Reinicie o Home Assistant
-5. Adicione o card via Interface → Editar Painel → **+ Adicionar Card** → **LG Washer Card**
+5. Adicione o card via Interface → Editar Painel → **+ Adicionar Card** → **LG Washer Card** ou **LG Washer Mini Card**
 
 ### Instalação Manual
 
@@ -35,7 +37,9 @@ Card customizável para máquinas de lavar **LG ThinQ** no Home Assistant, com e
 
 ## Configuração
 
-Use o **editor visual** ou configure via YAML:
+Use o **editor visual** ou configure via YAML.
+
+### Card completo
 
 ```yaml
 type: custom:lg-washer-card
@@ -50,6 +54,29 @@ power_switch: switch.lavadora_power
 pause_button: button.lavadora_pause
 start_button: button.lavadora_remote_start
 ```
+
+### Mini card
+
+O mini card usa a mesma configuração do card completo, mudando apenas o tipo:
+
+```yaml
+type: custom:lg-washer-mini-card
+name: Lavadora
+model: LG VC4
+brand: LG ThinQ
+entity: sensor.lavadora
+temp_entity: sensor.lavadora_water_temp
+spin_entity: sensor.lavadora_spin_speed
+course_entity: sensor.lavadora_current_course
+power_switch: switch.lavadora_power
+pause_button: button.lavadora_pause
+start_button: button.lavadora_remote_start
+```
+
+### Tipos disponíveis
+
+- `custom:lg-washer-card`: layout completo com informações detalhadas e controles visíveis
+- `custom:lg-washer-mini-card`: layout compacto para dashboards com pouco espaço
 
 | Opção | Descrição | Obrigatório |
 |---|---|---|
@@ -75,3 +102,6 @@ O card utiliza os seguintes atributos da entidade principal:
 ## Licença
 
 MIT
+
+
+
